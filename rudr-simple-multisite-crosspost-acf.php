@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.0
+ * Version: 1.1
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -76,8 +76,13 @@ class Rudr_SMC_ACF {
 				break;
 			}
 			case 'relationship':
+			case 'page_link' :
 			case 'post_object': {
 				$meta_value = $this->process_relationships_field( $meta_value );
+				break;
+			}
+			case 'taxonomy' : {
+				$meta_value = $this->process_taxonomy_relationships_field( $meta_value );
 				break;
 			}
 		}
@@ -114,24 +119,52 @@ class Rudr_SMC_ACF {
 
 	private function process_relationships_field( $meta_value ) {
 
+		$meta_value = maybe_unserialize( $meta_value );
+		$ids = is_array( $meta_value ) ? $meta_value : array( $meta_value );
 		$new_blog_id = get_current_blog_id();
 		restore_current_blog();
 
-		if( is_array( $meta_value ) ) {
-			foreach( $meta_value as $id ) {
-				if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $id, $new_blog_id ) ) {
-					$meta_values_crossposted[] = $new_id;
-				}
-			}
-			$meta_value = $meta_values_crossposted;
-		} else {
-			if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $meta_value, $new_blog_id ) ) {
-				$meta_value = $new_id;
+		$crossposted_ids = array();
+		foreach( $ids as $id ) {
+			if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $id, $new_blog_id ) ) {
+				$crossposted_ids[] = $new_id;
 			}
 		}
 
 		switch_to_blog( $new_blog_id );
-		return $meta_value;
+
+		return is_array( $meta_value ) ? maybe_serialize( $crossposted_ids ) : ( $crossposted_ids ? reset( $crossposted_ids ) : 0 );
+
+	}
+
+
+	private function process_taxonomy_relationships_field( $meta_value ) {
+		// can be either int or a serialized array
+		$meta_value = maybe_unserialize( $meta_value );
+		$ids = is_array( $meta_value ) ? $meta_value : array( $meta_value );
+		$new_blog_id = get_current_blog_id();
+		restore_current_blog();
+
+		$terms_data = array();
+		foreach( $ids as $id ) {
+			$term = get_term( $id );
+			if( ! $term ) {
+				continue;
+			}
+			$terms_data[] = array( 'id' => $id, 'slug' => $term->slug, 'taxonomy' => $term->taxonomy );
+		}
+
+		switch_to_blog( $new_blog_id );
+
+		$crossposted_term_ids = array();
+		foreach( $terms_data as $term_data ) {
+			$crossposted_term = get_term_by( 'slug', $term_data[ 'slug' ], $term_data[ 'taxonomy' ] );
+			if( $crossposted_term ) {
+				$crossposted_term_ids[] = $crossposted_term->term_id;
+			}
+		}
+
+		return is_array( $meta_value ) ? maybe_serialize( $crossposted_term_ids ) : ( $crossposted_term_ids ? reset( $crossposted_term_ids ) : 0 );
 
 	}
 
