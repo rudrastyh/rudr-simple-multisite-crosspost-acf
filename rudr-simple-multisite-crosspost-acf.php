@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.1
+ * Version: 1.2
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -243,8 +243,31 @@ class Rudr_SMC_ACF {
 					//addslashes( wp_kses( stripslashes( $value ), 'post' ) )
 				);
 
-				//$fields[ $key ] = trim( json_encode( $fields[ $key ] ), '"' );
-				$fields[ $key ] = str_replace(
+				preg_match_all( "/\u([0-9a-f]{3,4})/i", json_encode( strip_tags( $fields[ $key ] ) ), $matches );
+
+				$notencoded = array(
+					'<',
+					'>',
+					'"',
+					"\t",
+				);
+				$encoded = array(
+					'\u003c',
+					'\u003e',
+					'\u0022',
+					'',
+				);
+
+				if( isset( $matches[1] ) && $matches[1] && is_array( $matches[1] ) ) {
+					foreach( $matches[1] as $match ) { // 00c4
+						$encoded[] = "\u$match";
+						$notencoded[] = json_decode( '"\u'.$match.'"' );
+					}
+				}
+
+				$fields[ $key ] = str_replace( $notencoded, $encoded, $fields[ $key ] );
+
+				/*$fields[ $key ] = str_replace(
 					array(
 						'<',
 						'>',
@@ -296,7 +319,7 @@ class Rudr_SMC_ACF {
 						'\u2033',
 					),
 					$fields[ $key ]
-				);
+				);*/
 
 				$fields[ '_'.$key ] = $field_key;
 			}
