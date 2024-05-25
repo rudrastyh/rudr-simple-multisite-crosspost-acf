@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.2
+ * Version: 1.3
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -125,13 +125,28 @@ class Rudr_SMC_ACF {
 		restore_current_blog();
 
 		$crossposted_ids = array();
+		$crossposted_skus = array(); // we will process it after switching to a new blog
 		foreach( $ids as $id ) {
-			if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $id, $new_blog_id ) ) {
-				$crossposted_ids[] = $new_id;
+			$post_type = get_post_type( $id );
+			if( 'product' === $post_type && 'sku' === Rudr_Simple_Multisite_Woo_Crosspost::connection_type() ) {
+				$crossposted_skus[] = get_post_meta( $id, '_sku', true );
+			} else {
+				if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $id, $new_blog_id ) ) {
+					$crossposted_ids[] = $new_id;
+				}
 			}
 		}
 
 		switch_to_blog( $new_blog_id );
+
+		// do we have some crossposted SKUs here? let's check if there are some in a new blog
+		if( $crossposted_skus ) {
+			foreach( $crossposted_skus as $crossposted_sku ) {
+				if( $new_id = Rudr_Simple_Multisite_Woo_Crosspost::maybe_is_crossposted_product__sku( array( 'sku' => $crossposted_sku ) ) ) {
+					$crossposted_ids[] = $new_id;
+				}
+			}
+		}
 
 		return is_array( $meta_value ) ? maybe_serialize( $crossposted_ids ) : ( $crossposted_ids ? reset( $crossposted_ids ) : 0 );
 
