@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.3
+ * Version: 1.4
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -243,18 +243,23 @@ class Rudr_SMC_ACF {
 				$field_key = $block[ 'attrs' ][ 'data' ][ '_'.$key ];
 
 				switch_to_blog( $new_blog_id );
-				$value = apply_filters(
+				$fields[ $key ] = apply_filters(
 					'rudr_pre_crosspost_acf_block_value',
 					$this->process_field_by_type( $value, acf_get_field( $field_key ) ),
 					$field_key,
 					$new_blog_id
 				);
+				$fields[ '_'.$key ] = $field_key;
 				restore_current_blog();
+
+				if( is_array( $fields[ $key ] ) ) {
+					continue;
+				}
 
 				$fields[ $key ] = str_replace(
 					array( "\r" . PHP_EOL, PHP_EOL ),
 					'\r\n',
-					$value
+					$fields[ $key ]
 					//addslashes( wp_kses( stripslashes( $value ), 'post' ) )
 				);
 
@@ -335,8 +340,6 @@ class Rudr_SMC_ACF {
 					),
 					$fields[ $key ]
 				);*/
-
-				$fields[ '_'.$key ] = $field_key;
 			}
 		}
 
