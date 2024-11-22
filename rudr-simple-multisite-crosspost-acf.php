@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.4
+ * Version: 1.4.1
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -128,7 +128,7 @@ class Rudr_SMC_ACF {
 		$crossposted_skus = array(); // we will process it after switching to a new blog
 		foreach( $ids as $id ) {
 			$post_type = get_post_type( $id );
-			if( 'product' === $post_type && 'sku' === Rudr_Simple_Multisite_Woo_Crosspost::connection_type() ) {
+			if( function_exists( 'wc_get_product_id_by_sku' ) && 'product' === $post_type && 'sku' === Rudr_Simple_Multisite_Woo_Crosspost::connection_type() ) {
 				$crossposted_skus[] = get_post_meta( $id, '_sku', true );
 			} else {
 				if( $new_id = Rudr_Simple_Multisite_Crosspost::is_crossposted( $id, $new_blog_id ) ) {
