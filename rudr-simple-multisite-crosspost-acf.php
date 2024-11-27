@@ -3,8 +3,8 @@
  * Plugin name: Simple Multisite Crossposting – ACF
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Description: Provides better compatibility with ACF and ACF PRO.
- * Version: 1.4.1
+ * Description: Provides better compatibility with ACF, ACF PRO and SCF.
+ * Version: 1.5
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -263,7 +263,7 @@ class Rudr_SMC_ACF {
 					//addslashes( wp_kses( stripslashes( $value ), 'post' ) )
 				);
 
-				preg_match_all( "/\u([0-9a-f]{3,4})/i", json_encode( strip_tags( $fields[ $key ] ) ), $matches );
+				preg_match_all( "/u([0-9a-f]{3,4})/i", json_encode( strip_tags( $fields[ $key ] ) ), $matches );
 
 				$notencoded = array(
 					'<',
@@ -284,7 +284,7 @@ class Rudr_SMC_ACF {
 						$notencoded[] = json_decode( '"\u'.$match.'"' );
 					}
 				}
-
+//file_put_contents( __DIR__ . '/log.txt' , print_r( $matches, true ) );
 				$fields[ $key ] = str_replace( $notencoded, $encoded, $fields[ $key ] );
 
 				/*$fields[ $key ] = str_replace(
