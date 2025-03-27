@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF, ACF PRO and SCF.
- * Version: 1.7
+ * Version: 1.8
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -91,11 +91,22 @@ class Rudr_SMC_ACF {
 
 	}
 
-	private function process_attachment_field( $meta_value ) {
+	private function process_attachment_field( $raw_meta_value ) {
 
-		$meta_value = maybe_unserialize( $meta_value );
-		// let's make it array anyway for easier processing
-		$ids = is_array( $meta_value ) ? $meta_value : array( $meta_value );
+		$meta_value = maybe_unserialize( $raw_meta_value );
+
+		if( ! is_array( $meta_value ) ) {
+			$meta_value = absint( $meta_value );
+			// let's do some validation
+			if( ! $meta_value ) {
+				return $raw_meta_value;
+			}
+
+			// let's make it array anyway for easier processing
+			$ids = array( $meta_value );
+		} else {
+			$ids = $meta_value;
+		}
 
 		$new_blog_id = get_current_blog_id();
 		restore_current_blog();
@@ -117,10 +128,23 @@ class Rudr_SMC_ACF {
 	}
 
 
-	private function process_relationships_field( $meta_value ) {
+	private function process_relationships_field( $raw_meta_value ) {
 
-		$meta_value = maybe_unserialize( $meta_value );
-		$ids = is_array( $meta_value ) ? $meta_value : array( $meta_value );
+		$meta_value = maybe_unserialize( $raw_meta_value );
+
+		if( ! is_array( $meta_value ) ) {
+			$meta_value = absint( $meta_value );
+			// let's do some validation
+			if( ! $meta_value ) {
+				return $raw_meta_value;
+			}
+
+			// let's make it array anyway for easier processing
+			$ids = array( $meta_value );
+		} else {
+			$ids = $meta_value;
+		}
+
 		$new_blog_id = get_current_blog_id();
 		restore_current_blog();
 
@@ -153,10 +177,23 @@ class Rudr_SMC_ACF {
 	}
 
 
-	private function process_taxonomy_relationships_field( $meta_value ) {
-		// can be either int or a serialized array
-		$meta_value = maybe_unserialize( $meta_value );
-		$ids = is_array( $meta_value ) ? $meta_value : array( $meta_value );
+	private function process_taxonomy_relationships_field( $raw_meta_value ) {
+
+		$meta_value = maybe_unserialize( $raw_meta_value );
+
+		if( ! is_array( $meta_value ) ) {
+			$meta_value = absint( $meta_value );
+			// let's do some validation
+			if( ! $meta_value ) {
+				return $raw_meta_value;
+			}
+
+			// let's make it array anyway for easier processing
+			$ids = array( $meta_value );
+		} else {
+			$ids = $meta_value;
+		}
+
 		$new_blog_id = get_current_blog_id();
 		restore_current_blog();
 
