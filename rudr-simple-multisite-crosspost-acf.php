@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF, ACF PRO and SCF.
- * Version: 1.8
+ * Version: 1.9
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -129,20 +129,31 @@ class Rudr_SMC_ACF {
 
 
 	private function process_relationships_field( $raw_meta_value ) {
+		// relationship field stores values serialized, but ACF blocks as arrays
+		$is_serialized = false;
+		$is_array = false;
 
-		$meta_value = maybe_unserialize( $raw_meta_value );
-
-		if( ! is_array( $meta_value ) ) {
-			$meta_value = absint( $meta_value );
-			// let's do some validation
-			if( ! $meta_value ) {
-				return $raw_meta_value;
-			}
-
-			// let's make it array anyway for easier processing
-			$ids = array( $meta_value );
+		if( is_array( $raw_meta_value ) ) {
+			// probably it is ACF block
+			$is_array = true;
+			$ids = $raw_meta_value;
 		} else {
-			$ids = $meta_value;
+			// let's try to unserialize it now
+			$meta_value = maybe_unserialize( $raw_meta_value );
+			// most likely it is an integer
+			if( ! is_array( $meta_value ) ) {
+				$meta_value = absint( $meta_value );
+				// let's do some validation
+				if( ! $meta_value ) {
+					return $raw_meta_value;
+				}
+				// let's make it array anyway for easier processing
+				$ids = array( $meta_value );
+			} else {
+				// after unserialization we have an array?
+				$is_serialized = true;
+				$ids = $meta_value;
+			}
 		}
 
 		$new_blog_id = get_current_blog_id();
@@ -172,8 +183,11 @@ class Rudr_SMC_ACF {
 			}
 		}
 
-		return is_array( $meta_value ) ? maybe_serialize( $crossposted_ids ) : ( $crossposted_ids ? reset( $crossposted_ids ) : 0 );
-
+		if( $is_serialized ) {
+			return maybe_serialize( $crossposted_ids );
+		} else {
+			return $is_array ? $crossposted_ids : ( ! empty( $crossposted_ids ) ? reset( $crossposted_ids ) : 0 );
+		}
 	}
 
 
@@ -278,11 +292,12 @@ class Rudr_SMC_ACF {
 			// modify
 			if( 0 !== strpos( $key, '_' ) ) {
 				$field_key = $block[ 'attrs' ][ 'data' ][ '_'.$key ];
+				$field_object = acf_get_field( $field_key );
 
 				switch_to_blog( $new_blog_id );
 				$fields[ $key ] = apply_filters(
 					'rudr_pre_crosspost_acf_block_value',
-					$this->process_field_by_type( $value, acf_get_field( $field_key ) ),
+					$this->process_field_by_type( $value, $field_object ),
 					$field_key,
 					$new_blog_id
 				);
