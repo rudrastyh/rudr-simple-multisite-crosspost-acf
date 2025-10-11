@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF, ACF PRO and SCF.
- * Version: 1.9
+ * Version: 2.0
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -93,7 +93,13 @@ class Rudr_SMC_ACF {
 
 	private function process_attachment_field( $raw_meta_value ) {
 
-		$meta_value = maybe_unserialize( $raw_meta_value );
+		if( is_serialized( $raw_meta_value ) ) {
+			$meta_value = maybe_unserialize( $raw_meta_value );
+			$was_serialized = true;
+		} else {
+			$meta_value = $raw_meta_value;
+			$was_serialized = false;
+		}
 
 		if( ! is_array( $meta_value ) ) {
 			$meta_value = absint( $meta_value );
@@ -104,8 +110,10 @@ class Rudr_SMC_ACF {
 
 			// let's make it array anyway for easier processing
 			$ids = array( $meta_value );
+			$was_array = false;
 		} else {
 			$ids = $meta_value;
+			$was_array = true;
 		}
 
 		$new_blog_id = get_current_blog_id();
@@ -123,7 +131,11 @@ class Rudr_SMC_ACF {
 			}
 		}
 
-		return is_array( $meta_value ) ? maybe_serialize( $attachment_ids ) : ( $attachment_ids ? reset( $attachment_ids ) : 0 );
+		if( $was_serialized ) {
+			return maybe_serialize( $attachment_ids );
+		} else {
+			return $was_array ? $attachment_ids : ( $attachment_ids ? reset( $attachment_ids ) : 0 );
+		}
 
 	}
 
@@ -193,7 +205,13 @@ class Rudr_SMC_ACF {
 
 	private function process_taxonomy_relationships_field( $raw_meta_value ) {
 
-		$meta_value = maybe_unserialize( $raw_meta_value );
+		if( is_serialized( $raw_meta_value ) ) {
+			$meta_value = maybe_unserialize( $raw_meta_value );
+			$was_serialized = true;
+		} else {
+			$meta_value = $raw_meta_value;
+			$was_serialized = false;
+		}
 
 		if( ! is_array( $meta_value ) ) {
 			$meta_value = absint( $meta_value );
@@ -204,8 +222,10 @@ class Rudr_SMC_ACF {
 
 			// let's make it array anyway for easier processing
 			$ids = array( $meta_value );
+			$was_array = false;
 		} else {
 			$ids = $meta_value;
+			$was_array = true;
 		}
 
 		$new_blog_id = get_current_blog_id();
@@ -230,7 +250,11 @@ class Rudr_SMC_ACF {
 			}
 		}
 
-		return is_array( $meta_value ) ? maybe_serialize( $crossposted_term_ids ) : ( $crossposted_term_ids ? reset( $crossposted_term_ids ) : 0 );
+		if( $was_serialized ) {
+			return maybe_serialize( $crossposted_term_ids );
+		} else {
+			return $was_array ? $crossposted_term_ids : ( $crossposted_term_ids ? reset( $crossposted_term_ids ) : 0 );
+		}
 
 	}
 
