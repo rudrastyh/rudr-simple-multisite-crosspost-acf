@@ -4,7 +4,7 @@
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
  * Description: Provides better compatibility with ACF, ACF PRO and SCF.
- * Version: 2.0
+ * Version: 2.1
  * Plugin URI: https://rudrastyh.com/support/acf-compatibility
  * Network: true
  */
@@ -263,6 +263,10 @@ class Rudr_SMC_ACF {
 
 		// no blocks, especially no acf ones
 		if( ! has_blocks( $content ) ) {
+			return $content;
+		}
+
+		if( ! function_exists( 'acf_has_block_type' ) ) {
 			return $content;
 		}
 
